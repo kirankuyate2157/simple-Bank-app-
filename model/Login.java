@@ -38,7 +38,7 @@ public class Login {
     }
 
     // if present, check credentials yes if not present no
-    public boolean isUserExist(String username, String password) {
+    private boolean isUserExist(String username, String password) {
         try {
             BufferedReader br = new BufferedReader(new FileReader(FILE_NAME));
             String line;
@@ -58,6 +58,24 @@ public class Login {
                     loanStatus = Boolean.parseBoolean(userData[9]);
                     LA = Double.parseDouble(userData[10]);
                     balance = Double.parseDouble(userData[11]);
+                    return true;
+                }
+            }
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean validUser(String username, String password) {
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(FILE_NAME));
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] userData = line.split(",");
+                if (userData[0].equals(username) && userData[1].equals(password)) {
+                    br.close();
                     return true;
                 }
             }
@@ -156,18 +174,29 @@ public class Login {
         } catch (IOException e) {
             System.out.println("Error writing to file: " + e.getMessage());
         }
-
-        System.out.println("Congratulations, your account has been created successfully!");
-        System.out.println("Your account details are: ");
-        System.out.println("Account Holder Name: " + username);
-        System.out.println("Account Number: " + accountNumber);
-        System.out.println("Account Type: " + accountType);
-        System.out.println("Opening Balance: $" + balance);
-        System.out.println("Account Open Date: " + openDate);
-        System.out.println("Account Status: Active");
-
         // close resources
         sc.close();
+
+        // delay 1 min
+        System.out.println("\t\t Creating account .... \n");
+
+        try {
+            Thread.sleep(20000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("Congratulations, your account has been created successfully!\n");
+        System.out.println("------------------------------------------------");
+        System.out.println("\tYour account details are: ");
+        System.out.println("\tAccount Holder Name: " + username);
+        System.out.println("\tAccount Number: " + accountNumber);
+        System.out.println("\tAccount Type: " + accountType);
+        System.out.println("\tOpening Balance: $" + balance);
+        System.out.println("\tAccount Open Date: " + openDate);
+        System.out.println("\tAccount Status: Active");
+        System.out.println("------------------------------------------------\n");
+
     }
 
     public static void main(String[] args) {

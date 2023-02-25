@@ -3,6 +3,8 @@ import java.io.*;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import javax.swing.UIDefaults.ActiveValue;
+
 public class Account {
     private static final String FILE_NAME = "AccountData.txt";
 
@@ -20,13 +22,22 @@ public class Account {
         System.out.println("Please provide account details!");
     }
 
+    boolean isActive() {
+        return usr != null;
+    }
+
+    boolean logout() {
+        usr = null;
+        return true;
+    }
+
     Scanner sc = new Scanner(System.in);
 
     void deposit(double amount) {
         balance += amount;
         // Saving transaction details to file
         saveTransactionDetails("Deposit", amount);
-        // updateBalance(accountNumber, balance);
+        updateBalance(accountNumber, balance);
         System.out.println("Deposit of $" + amount + " successful. Current balance is $" + balance);
     }
 
@@ -42,6 +53,10 @@ public class Account {
         System.out.println("Withdrawal of $" + amount + " successful. Current balance is $" + balance);
     }
 
+    double viewBalance() {
+        return balance;
+    }
+
     void miniStatement() {
         // Reading last 5 transaction details from file
         List<String> transactions = readLastNTransactions(5);
@@ -53,6 +68,53 @@ public class Account {
             System.out.println(transaction);
         }
         transactions.clear();
+    }
+
+    void printStatement() {
+        // Reading last 5 transaction details from file
+        List<String> transactions = printTransactions(5);
+        int n = transactions.size();
+        if (n == 0) {
+            System.out.println("No transactions found.");
+            return;
+        }
+        System.out.println("+-----------------------------------------------------------------------------+");
+        System.out.printf("| %-30s | %-15s | %-10s | %-10s |\n", "Date/Time", "Transaction Type", "Amount", "Balance");
+        System.out.println("+-----------------------------------------------------------------------------+");
+        double balance = 0.0;
+        for (int i = n - 1; i >= 0; i--) {
+            String transaction = transactions.get(i);
+            String[] fields = transaction.split(",");
+            String date = fields[3];
+            String type = fields[1];
+            double amount = Double.parseDouble(fields[2]);
+            balance += amount;
+            String amountStr = String.format("$%.2f", amount);
+            String balanceStr = fields[4].substring(fields[4].indexOf(':') + 2); // extract balance value from string
+            balance = Double.parseDouble(balanceStr);
+            System.out.printf("| %-30s | %-16s | %-10s | %-10s |\n", date, type, amountStr, balanceStr);
+        }
+        System.out.println("+-----------------------------------------------------------------------------+");
+        transactions.clear();
+    }
+
+    private List<String> printTransactions(int n) {
+        List<String> transactions = new ArrayList<>();
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(FILE_NAME));
+            String line;
+
+            while ((line = br.readLine()) != null && transactions.size() < n) {
+                String[] transactionData = line.split(",");
+                if (transactionData[0].equals(accountNumber)) {
+                    transactions.add(line);
+                }
+            }
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return transactions;
     }
 
     private void saveTransactionDetails(String type, double amount) {
@@ -89,12 +151,6 @@ public class Account {
             e.printStackTrace();
         }
         return cnt;
-    }
-
-    public boolean isLoanable(Login user) {
-        if (numberOfTransactions() > 10 && !user.loanStatus)
-            return true;
-        return false;
     }
 
     private List<String> readLastNTransactions(int n) {
@@ -179,17 +235,24 @@ public class Account {
         }
     }
 
+    public boolean isLoanable(Login user) {
+        if (numberOfTransactions() > 10 && !user.loanStatus)
+            return true;
+        return false;
+    }
+
     void takeLoan(boolean lStatus) {
         if (lStatus) {
             double amt = 20000.0;
             System.out.println("Appoved loan amount is : " + amt);
-            System.out.print("if you want to continue : ");
+            System.out.print("if you want to continue give positive number :) ... ");
             int choice = 0;
             choice = sc.nextInt();
             if (choice < 1)
                 return;
-            updateLoanBalance(accountNumber, amt, false);
-            saveTransactionDetails("Loan ", amt);
+            balance = usr.getBalance();
+            updateLoanBalance(accountNumber, amt, true);
+            saveTransactionDetails("Loan taken ", amt);
         } else {
             System.out.println("Your not eligible for Loan ");
         }
@@ -205,7 +268,7 @@ public class Account {
             if (choice < 1)
                 return;
             updateLoanBalance(accountNumber, amt, false);
-            saveTransactionDetails("Loan ", amt);
+            saveTransactionDetails("Loan cleared ", amt);
         } else {
             System.out.println("Your not eligible for Loan ");
         }
@@ -247,9 +310,9 @@ public class Account {
     void changePassword() {
         String a;
         int b;
-        System.out.println("Enter old password: ");
+        System.out.print("\nEnter old password: ");
         a = sc.nextLine();
-        System.out.println("Enter new password: ");
+        System.out.println("\nEnter new password: ");
         b = sc.nextInt();
         boolean x = checkPassword(a, b);
         if (x) {
@@ -271,32 +334,16 @@ public class Account {
     }
 
     void activeServices() {
-        System.out.println("- emails");
-        System.out.println("- SMS");
+        System.out.println("\t- emails");
+        System.out.println("\t- SMS");
         if (usr.isDebitCard())
-            System.out.println("- debit card");
+            System.out.println("\t- debit card");
         if (usr.isCreditCard())
-            System.out.println("- credit card");
+            System.out.println("\t- credit card");
         if (usr.isChqueBook())
-            System.out.println("- cheque Book");
+            System.out.println("\t- cheque Book");
         if (usr.isInternationalTransaction())
-            System.out.println("Internationals transactions");
-
-    }
-
-    public static void main(String[] args) {
-        Login user = new Login("shital", "8855");
-        String accountNumber = user.getAccount();
-        double amount = user.getBalance();
-        System.out.println("Account : " + accountNumber + " Amount : " + amount + "\n");
-
-        Account account = new Account(user, accountNumber, amount);
-
-        // account.changePassword();
-        // account.loan(account.isLoanable(user));
-        // account.miniStatement();
-        Login obj = new Login();
-        obj.createAccount();
+            System.out.println("\t- Internationals transactions");
 
     }
 
